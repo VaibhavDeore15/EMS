@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Start Exam</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #timer {
+      position: fixed;
+      top: 10px;
+      right: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: red;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+<div id="timer">Time Remaining: --:--</div>
+
+<div class="container mt-5">
+  <div class="bg-white p-4 shadow rounded">
+    <h3 class="mb-4">Exam Questions</h3>
+    <form method="post" action="{{ url_for('std_bp.submit_exam', exam_id=exam_id) }}">
+      {% for q in questions %}
+        <div class="mb-4">
+          <p><strong>Q{{ loop.index }}: {{ q.question_text }}</strong></p>
+          {% for opt in ['A', 'B', 'C', 'D'] %}
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="q{{ q.id }}" value="{{ opt }}" {% if opt == 'A' %}required{% endif %}>
+              <label class="form-check-label">{{ q['option_' + opt.lower()] }}</label>
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary" onclick="this.disabled=true; this.form.submit();">Submit Exam</button>
+    </form>
+  </div>
+</div>
+
+<!-- Hidden video -->
+<video id="video" autoplay muted playsinline style="display:none;"></video>
+
+<script>
+
+  // Request fullscreen
+  function launchFullScreen() {
+    const docElm = document.documentElement;
+    if (docElm.requestFullscreen) {
+      docElm.requestFullscreen();
+    } else if (docElm.mozRequestFullScreen) { // Firefox
+      docElm.mozRequestFullScreen();
+    } else if (docElm.webkitRequestFullscreen) { // Chrome, Safari
+      docElm.webkitRequestFullscreen();
+    } else if (docElm.msRequestFullscreen) { // IE/Edge
+      docElm.msRequestFullscreen();
+    }
+  }
+
+  // Detect fullscreen exit
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) {
+      reportCheating("Student exited fullscreen mode.");
+    }
+  });
+  document.addEventListener("webkitfullscreenchange", () => {
+    if (!document.webkitFullscreenElement) {
+      reportCheating("Student exited fullscreen mode.");
+    }
+  });
+
+  // Start fullscreen on page load
+  window.onload = () => {
+  };
+
+
+  const duration = {{ duration }} * 60;
+  let timeLeft = duration;
+  const timerDisplay = document.getElementById('timer');
+
+  const timerInterval = setInterval(() => {
+    const mins = Math.floor(timeLeft / 60);
+    const secs = timeLeft % 60;
+    timerDisplay.textContent = `Time Remaining: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    timeLeft--;
+    if (timeLeft < 0) {
+      clearInterval(timerInterval);
+      alert("Time's up! Submitting your exam.");
+      document.querySelector("form").submit();
+    }
+  }, 1000);
+
+  // Tab switch detection
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      reportCheating("Student switched tab or minimized window.");
+    }
+  });
+
+  function reportCheating(issue) {
+    fetch("/protector/log-issue", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        student_id: "{{ session['user_id'] }}",
+        username: "{{ session['username'] }}",
+        exam_title: "{{ exam_title }}",
+        issue: issue,
+        time: new Date().toLocaleString('en-GB', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', hour12: false
+        }).replace(',', '')
+      })
+    }).then(r => r.json())
+      .then(data => console.log("Logged:", data))
+      .catch(err => console.error("Logging error:", err));
+  }
+
+  let video = document.getElementById("video");
+
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+    video.srcObject = stream;
+
+    // Send webcam frames to OpenCV Flask server every 5 seconds
+    setInterval(() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const base64Image = canvas.toDataURL('image/jpeg');
+
+      fetch("/protector/log-issue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: base64Image,
+          student_id: "{{ session['user_id'] }}",
+          username: "{{ session['username'] }}",
+          exam_title: "{{ exam_title }}",
+          time: new Date().toLocaleString('en-GB', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hour12: false
+          }).replace(',', '')
+        })
+      }).then(res => res.json())
+        .then(data => {
+          if (data.issue) {
+            reportCheating(data.issue);
+          }
+        })
+        .catch(err => console.error("Frame sending error:", err));
+    }, 10000);
+
+  }).catch(() => {
+    reportCheating("Camera/Mic access denied");
+  });
+</script>
+
+</body>
+</html>

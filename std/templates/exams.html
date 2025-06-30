@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Available Exams{% endblock %}
+
+{% block content %}
+<div class="bg-white p-4 shadow rounded mt-4">
+  <h3>Available Exams</h3>
+  <hr>
+  {% if exams %}
+    <ul class="list-group">
+      {% for exam in exams %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ exam.title }}</strong><br>
+            <small>Date: {{ exam.date }} | Duration: {{ exam.duration }} mins</small>
+          </div>
+          <a href="{{ url_for('std_bp.start_exam', exam_id=exam.id) }}"  class="btn btn-sm btn-success">Start Exam</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">No exams available right now.</p>
+  {% endif %}
+</div>
+{% endblock %}

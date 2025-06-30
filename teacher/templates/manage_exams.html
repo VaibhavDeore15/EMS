@@ -1,0 +1,69 @@
+{% extends "Basee.html" %}
+
+{% block title %}Manage Exams{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f5f5f5;
+    }
+    h2 {
+        color: #333;
+        margin-bottom: 20px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+        padding: 12px;
+        border: 1px solid #ccc;
+        text-align: left;
+    }
+    th {
+        background-color: #007BFF;
+        color: white;
+    }
+    a.button {
+        background: #007BFF;
+        color: white;
+        padding: 6px 12px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-right: 5px;
+    }
+    a.button:hover {
+        background: #0056b3;
+    }
+</style>
+
+<h2>Manage Your Exams</h2>
+
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Date</th>
+        <th>Duration</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    {% for exam in exams %}
+    <tr>
+        <td>{{ exam['title'] }}</td>
+        <td>{{ exam['date'] }}</td>
+        <td>{{ exam['duration'] }} mins</td>
+        <td>{{ exam['status'] }}</td>
+        <td>
+            <a class="button" href="{{ url_for('teacher_bp.add_question', exam_id=exam['id']) }}">Add Questions</a>
+            {% if exam['status'] == 'active' %}
+                <a class="button" href="{{ url_for('teacher_bp.set_exam_status', exam_id=exam['id'], status='ended') }}">End</a>
+            {% else %}
+                <a class="button" href="{{ url_for('teacher_bp.set_exam_status', exam_id=exam['id'], status='active') }}">Activate</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "Basee.html" %}
+
+{% block title %}Add Question{% endblock %}
+
+{% block content %}
+<style>
+  body {
+    background: #1e1e1e;
+    color: white;
+    font-family: Arial, sans-serif;
+  }
+  h2 {
+    color: #00bfff;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  form {
+    background-color: #2c2c2c;
+    padding: 25px;
+    border-radius: 12px;
+    max-width: 600px;
+    margin: auto;
+    margin-top: 40px;
+  }
+  label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  input[type="text"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    background: #3c3c3c;
+    color: white;
+  }
+  textarea {
+    height: 100px;
+  }
+  button {
+    margin-top: 20px;
+    background: #00bfff;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #0099cc;
+  }
+</style>
+
+<h2><i class="fas fa-question-circle"></i> Add Question to Exam</h2>
+
+<form method="post">
+  <label>Question Text:</label>
+  <textarea name="question_text" required></textarea>
+
+  <label>Option A:</label>
+  <input type="text" name="option_a" required>
+
+  <label>Option B:</label>
+  <input type="text" name="option_b" required>
+
+  <label>Option C:</label>
+  <input type="text" name="option_c" required>
+
+  <label>Option D:</label>
+  <input type="text" name="option_d" required>
+
+  <label>Correct Option:</label>
+  <select name="correct_option" required>
+    <option value="">Select</option>
+    <option value="A">Option A</option>
+    <option value="B">Option B</option>
+    <option value="C">Option C</option>
+    <option value="D">Option D</option>
+  </select>
+
+  <button type="submit">Add Question</button>
+</form>
+{% endblock %}
